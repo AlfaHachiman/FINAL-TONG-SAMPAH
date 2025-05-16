@@ -1,13 +1,12 @@
-#include <Servo.h>  // Library servo
+#include <Servo.h>  
 
-#define TRIG_PIN 9      // Arduino ke sensor
-#define ECHO_PIN 10     // Sensor ke Arduino
-#define LED_PIN 13      // Lampu
-#define BUZZER_PIN 8    // Buzzer
-#define SERVO_PIN 7     // Servo
+#define TRIG_PIN 9      
+#define ECHO_PIN 10     
+#define LED_PIN 13      
+#define BUZZER_PIN 8    
+#define SERVO_PIN 7     
 
-bool objectDetected = false; // Status objek terdeteksi
-bool buzzerDone = false;     // Flag untuk buzzer sudah bunyi 2 kali
+bool objectDetected = false; 
 
 Servo myServo;
 
@@ -19,16 +18,18 @@ void setup() {
   Serial.begin(9600);
 
   myServo.attach(SERVO_PIN);
-  myServo.write(0);  // Posisi servo awal
+  myServo.write(0);  
 }
 
 void loop() {
   int distance = 0;
 
+  // Cek apakah ada input jarak dari Serial Monitor
   if (Serial.available()) {
     distance = Serial.parseInt();
-    Serial.read();
+    Serial.read(); // buang karakter akhir
   } else {
+    // Baca jarak dari sensor ultrasonik
     digitalWrite(TRIG_PIN, LOW);
     delayMicroseconds(2);
     digitalWrite(TRIG_PIN, HIGH);
@@ -45,31 +46,29 @@ void loop() {
   if (distance < 15) {
     digitalWrite(LED_PIN, HIGH);
 
-    if (!buzzerDone) {
-      myServo.write(90);  // Servo langsung gerak ke 90°
+    // Jika objek baru saja terdeteksi
+    if (!objectDetected) {
+      myServo.write(180);  // putar servo
 
-      for (int i = 0; i < 2; i++) {   // Buzzer bunyi 2 kali
+      // Bunyikan buzzer 2x
+      for (int i = 0; i < 2; i++) {
         digitalWrite(BUZZER_PIN, HIGH);
-        delay(200);
+        delay(100);
         digitalWrite(BUZZER_PIN, LOW);
-        delay(200);
+        delay(100);
       }
 
-      buzzerDone = true;
-    } else {
-      myServo.write(90);  // Servo tetap di 90°
+      objectDetected = true;  // tandai bahwa objek sedang terdeteksi
     }
-
-    objectDetected = true;
 
   } else {
     digitalWrite(LED_PIN, LOW);
     digitalWrite(BUZZER_PIN, LOW);
 
+    // Jika objek sebelumnya terdeteksi dan sekarang sudah tidak ada
     if (objectDetected) {
-      myServo.write(0);   // Servo balik ke posisi awal
+      myServo.write(0);  // kembalikan servo ke posisi awal
       objectDetected = false;
-      buzzerDone = false; // Reset supaya buzzer bisa bunyi lagi
     }
   }
 
